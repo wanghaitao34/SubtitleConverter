@@ -14,7 +14,7 @@ macOS 应用图标为纯蓝色圆角方形，叠放浅蓝与白色文档，白�
 open dist/SubtitleConverter.app
 ```
 
-此应用使用本机临时签名，未经过 Apple 公证，适用于本机使用；不是可分发的 Developer ID 安装包。生成的二进制与构建机器架构一致。
+应用支持 macOS 13 或更高版本；当前发行包面向 Apple Silicon（arm64）。正式发行版由 Developer ID 签名并经 Apple 公证，压缩包中的应用已附加公证票据。若在离线状态首次启动，Gatekeeper 可能需要联网验证票据。
 
 ## 使用
 
@@ -54,6 +54,17 @@ bash scripts/test.sh
 bash scripts/build-app.sh
 open dist/SubtitleConverter.app
 ```
+
+默认构建使用本机临时签名，适合开发和本机测试。创建已签名并公证的发行包前，请确保 Developer ID Application 证书已安装在钥匙串中，并已通过 `notarytool store-credentials` 保存公证配置；不要把证书密码或凭据写入仓库。然后运行：
+
+```sh
+CODESIGN_IDENTITY='Developer ID Application: Your Organization (TEAMID)' \
+NOTARY_PROFILE='Your-notarytool-keychain-profile' \
+NOTARIZE=1 \
+bash scripts/build-app.sh
+```
+
+发行构建会先以 Hardened Runtime 和可信时间戳签名，使用 `ditto` 创建 ZIP 后提交 Apple 公证；获准后将票据 stapling 到 `.app`，并重新生成包含已附加票据应用的 `dist/SubtitleConverter-macOS-arm64.zip`。未设置 `NOTARIZE=1` 时不会连接 Apple 公证服务，仍使用临时签名。
 
 可使用原生 `NSHostingView` 渲染器生成浅色或深色界面预览 PNG（默认尺寸 1100 × 820、2× 分辨率）：
 
